@@ -20,13 +20,13 @@
 # put your dev account information into these variables
 
 # the email address of your developer account
-dev_account="matt@hiddenloop.com"
+dev_account="acrossoffwest@gmail.com"
 
 # the name of your Developer ID installer certificate
-signature="Developer ID Installer: Hiddenloop Ltd. (8VF6UH3LYN)"
+signature="Apple Development: acrossoffwest@gmail.com (P87UX32WF9)"
 
 # the 10-digit team id
-dev_team="8VF6UH3LYN"
+dev_team="P87UX32WF9"
 
 # the label of the keychain item which contains an app-specific password
 dev_keychain_label="Developer-altool"

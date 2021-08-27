@@ -28,6 +28,15 @@ void SIGINT_handler(int signum) {
 }
 
 /**
+ * signal interrupt handler
+ */
+void SIGSTP_handler(int signum) {
+    if ([videoSnap isRecording]) {
+        [videoSnap togglePauseRecording:signum];
+    }
+}
+
+/**
  * main
  */
 int main(int argc, const char * argv[]) {
@@ -37,7 +46,8 @@ int main(int argc, const char * argv[]) {
 
 	// setup int handler for Ctrl+C cancelling
 	signal(SIGINT, &SIGINT_handler);
-
+    signal(SIGTSTP, &SIGSTP_handler);
+    
 	// convert C argv values array to NSArray
 	NSMutableArray *args = [[NSMutableArray alloc] initWithCapacity: argc];
 	for (int i = 0; i < argc; i++) {

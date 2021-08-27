@@ -22,6 +22,7 @@
   AVCaptureSession         *session;
   AVCaptureMovieFileOutput *movieFileOutput;
   BOOL                     isVerbose;
+  AVCaptureConnection *conn;
 }
 
 // class methods
@@ -101,6 +102,11 @@
  * Delegates stopRecording to movieFileOutput, with SIGINT value from handler
  */
 -(void)stopRecording:(int)sigNum;
+
+/**
+ * Delegates togglePauseRecording to movieFileOutput, with SIGINT value from handler
+ */
+-(void)togglePauseRecording:(int)sigNum;
 
 /**
  * AVCaptureMovieFileOutput delegate, called when output file has been finally

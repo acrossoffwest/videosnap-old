@@ -327,7 +327,7 @@
 		// set capture frame rate (fps)
 		int32_t fps = DEFAULT_FRAMES_PER_SECOND;
 		verbose("(set capture framerate to %i fps)\n", fps);
-		AVCaptureConnection *conn = [movieFileOutput connectionWithMediaType:AVMediaTypeVideo];
+		conn = [movieFileOutput connectionWithMediaType:AVMediaTypeVideo];
 		if([conn isVideoMinFrameDurationSupported]) {
 			conn.videoMinFrameDuration = CMTimeMake(1, fps);
 		}
@@ -448,6 +448,18 @@
 		verbose("(stopping recording)\n");
 		[movieFileOutput stopRecording];
 	}
+}
+
+/**
+ * toggle pause/resume recording to the file
+ */
+- (void)togglePauseRecording:(int)sigNum {
+    verbose("\n(caught signal: [%d])\n", sigNum);
+    if([movieFileOutput isRecordingPaused]) {
+        [movieFileOutput resumeRecording];
+    } else {
+        [movieFileOutput pauseRecording];
+    }
 }
 
 

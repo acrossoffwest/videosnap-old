@@ -88,7 +88,6 @@
   if (device == nil) {
     device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeMuxed];
   }
-
   return device;
 }
 
@@ -104,7 +103,6 @@
       device = thisDevice;
     }
   }
-
   return device;
 }
 
@@ -127,7 +125,6 @@
 
 	// argument defaults
 	AVCaptureDevice *device;
-	NSString        *filePath;
 	NSString        *encodingPreset    = DEFAULT_ENCODING_PRESET;
 	NSNumber        *delaySeconds      = [NSNumber numberWithFloat:DEFAULT_RECORDING_DELAY];
 	NSNumber        *recordingDuration = nil;
@@ -148,30 +145,24 @@
 
 		// check for switches
 		if ([arg characterAtIndex:0] == '-') {
-
 			if([arg isEqualToString: @"--no-audio"]) {
 				noAudio = YES;
 			}
-            
-
 			switch ([arg characterAtIndex:1]) {
                 // show help
 				case 'h':
 					[VideoSnap printHelp];
 					return 0;
 					break;
-
                 // set verbose flag
 				case 'v':
 					isVerbose = YES;
 					break;
-
                 // list devices
 				case 'l':
 					[VideoSnap listDevices];
 					return 0;
 					break;
-
                 // device
 				case 'd':
 					if (i+1 < argc) {
@@ -183,8 +174,6 @@
 						++i;
 					}
 					break;
-
-
                 // encodingPreset
 				case 'p':
 					if (i+1 < argc) {
@@ -216,7 +205,7 @@
 
 	// check we have a file
 	if (filePath == nil) {
-		filePath = DEFAULT_RECORDING_FILENAME;
+        filePath = [self getDefaultFilename];
 		verbose("(no filename specified, using default)\n");
 	}
 
@@ -259,7 +248,7 @@
 		if(recordingDuration != nil) {
 			console("Started capture...\n");
 		} else {
-			console("Started capture (ctrl+c to stop)...\n");
+			console("Started capture (ctrl+c to stop, and again for close application)...\nFor pause/resume ctrl+z\nSave record to file and start recording in new file ctrl+\\\n");
 		}
 		[[NSRunLoop currentRunLoop] run];
 	} else {
@@ -302,12 +291,21 @@
 	verbose("            %s - %s\n",  [[videoDevice modelID] UTF8String], [[videoDevice manufacturer] UTF8String]);
 
 	verbose("(initializing capture session)\n");
+    
+    NSLog(@"VIDEO DEVICE: %@", videoDevice.localizedName);
+    
+    if (session != nil) {
+        [session removeOutput:movieFileOutput];
+        [session stopRunning];
+    }
+    
   session = [[AVCaptureSession alloc] init];
-
 	// add video input
 	verbose("(adding video device)\n");
 	AVCaptureDeviceInput *videoInput = [AVCaptureDeviceInput deviceInputWithDevice:videoDevice error:&nserror];
 
+    [session removeInput:videoInput];
+    
 	if (videoInput) {
 		if ([session canAddInput:videoInput]) {
 			[session addInput:videoInput];
@@ -443,9 +441,8 @@
  * stops recording to the file
  */
 - (void)stopRecording:(int)sigNum {
-	verbose("\n(caught signal: [%d])\n", sigNum);
 	if([movieFileOutput isRecording]) {
-		verbose("(stopping recording)\n");
+		NSLog(@"(stopping recording)\n");
 		[movieFileOutput stopRecording];
 	}
 }
@@ -454,15 +451,22 @@
  * toggle pause/resume recording to the file
  */
 - (void)togglePauseRecording:(int)sigNum {
-    verbose("\n(caught signal: [%d])\n", sigNum);
+    NSLog(@"\n(caught signal: [%d])\n", sigNum);
     if([movieFileOutput isRecordingPaused]) {
+        NSLog(@"Resume recording");
         [movieFileOutput resumeRecording];
     } else {
+        NSLog(@"Pause recording");
         [movieFileOutput pauseRecording];
     }
 }
 
-
+- (NSString *)getDefaultFilename {
+    NSDateFormatter *dateFormatter=[[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"yyyyMMddHHmmss"];
+    
+    return [@[@"movie-", [dateFormatter stringFromDate:[NSDate date]], @".mov"] componentsJoinedByString:@""];
+}
 /**
  * delegate called when output file has been written to
  */
@@ -477,7 +481,10 @@ didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL
 	// check if a problem occurred, to see if recording was successful
 	if ([error code] != noErr) {
 		id value = [[error userInfo] objectForKey:AVErrorRecordingSuccessfullyFinishedKey];
-		if (value) {
+        NSLog(@"ERROR DESCRIPTION: %@",[error localizedDescription]);
+        NSLog(@"ERROR CODE: %ld", (long)[error code]);
+        NSLog(@"ERROR RECOVERY SUGGESTION: %@",[error localizedRecoverySuggestion]);
+        if (value) {
 			captureSuccessful = [value boolValue];
 		}
 	}
@@ -489,7 +496,7 @@ didFinishRecordingToOutputFileAtURL:(NSURL *)outputFileURL
 	if(captureSuccessful) {
 		NSNumber *outputDuration = [NSNumber numberWithFloat: CMTimeGetSeconds([movieFileOutput recordedDuration])];
 		console("\nCaptured %.2f seconds of video to '%s'\n", [outputDuration floatValue], [[outputFileURL lastPathComponent] UTF8String]);
-		exit(0);
+		//exit(0);
 	} else {
 		error("\nFailed to capture any video\n");
 		verbose_error("(reason: %s)\n", [[error localizedDescription] UTF8String]);

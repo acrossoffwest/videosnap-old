@@ -14,6 +14,7 @@
 
 BOOL isInterrupted;
 VideoSnap *videoSnap;
+NSArray *initArgs;
 
 /**
  * signal interrupt handler
@@ -31,9 +32,24 @@ void SIGINT_handler(int signum) {
  * signal interrupt handler
  */
 void SIGSTP_handler(int signum) {
-    if ([videoSnap isRecording]) {
-        [videoSnap togglePauseRecording:signum];
+    if (![videoSnap isRecording]) {
+        return;
     }
+    
+    [videoSnap togglePauseRecording:signum];
+}
+
+/**
+ * signal interrupt handler
+ */
+void SIGQUIT_handler(int signum) {
+    if (![videoSnap isRecording]) {
+        return;
+    }
+    
+    [videoSnap stopRecording:signum];
+    videoSnap     = [[VideoSnap alloc] init];
+    [videoSnap processArgs: initArgs];
 }
 
 /**
@@ -47,6 +63,7 @@ int main(int argc, const char * argv[]) {
 	// setup int handler for Ctrl+C cancelling
 	signal(SIGINT, &SIGINT_handler);
     signal(SIGTSTP, &SIGSTP_handler);
+    signal(SIGQUIT, &SIGQUIT_handler);
     
 	// convert C argv values array to NSArray
 	NSMutableArray *args = [[NSMutableArray alloc] initWithCapacity: argc];
@@ -64,6 +81,6 @@ int main(int argc, const char * argv[]) {
         UInt32 allow = 1;
         CMIOObjectSetPropertyData(kCMIOObjectSystemObject, &prop, 0, NULL, sizeof(allow), &allow);
     }
-    
+    initArgs = args;
 	return [videoSnap processArgs: args];
 }

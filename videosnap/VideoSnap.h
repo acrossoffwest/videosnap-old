@@ -23,6 +23,7 @@
   AVCaptureMovieFileOutput *movieFileOutput;
   BOOL                     isVerbose;
   AVCaptureConnection *conn;
+  NSString *filePath;
 }
 
 // class methods
@@ -102,6 +103,11 @@
  * Delegates stopRecording to movieFileOutput, with SIGINT value from handler
  */
 -(void)stopRecording:(int)sigNum;
+
+/**
+ * Get default generated filename
+ */
+-(NSString *)getDefaultFilename;
 
 /**
  * Delegates togglePauseRecording to movieFileOutput, with SIGINT value from handler
